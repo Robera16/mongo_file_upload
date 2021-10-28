@@ -10,6 +10,12 @@
       integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm"
       crossorigin="anonymous"
     />
+    <style>
+      img {
+        width: 100px;
+        height: 100px;
+      }
+    </style>
     <title>Mongo File Uploads</title>
   </head>
   <body>
@@ -33,6 +39,23 @@
               class="btn btn-primary btn-block"
             />
           </form>
+          <hr />
+          <% if(files){%> <% files.forEach(function(file){%>
+          <div class="mb-3" style="display: inline !important">
+            <% if(file.isImage){ %>
+            <img src="image/<%=file.filename%>" alt="" />
+            <% }else{%> <%=file.filename%> <%}%>
+            <form
+              style="display: inline !important"
+              method="POST"
+              action="/files/<%= file._id%>?_method=DELETE"
+            >
+              <button class="btn btn-danger">Delete</button>
+            </form>
+          </div>
+          <%})%> <%} else { %>
+          <p>No files to show</p>
+          <%}%>
         </div>
       </div>
     </div>

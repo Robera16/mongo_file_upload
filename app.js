@@ -17,8 +17,9 @@ app.use(methodOverride("methodOverride"));
 app.set("view engine", "ejs");
 
 // Mongo URI
-const mongoURI =
-  "mongodb+srv://robW123:robW123@cluster0.uwhek.mongodb.net/fileupload?retryWrites=true&w=majority";
+const mongoURI = "mongodb://localhost:27017/fileupload";
+// "mongodb+srv://robW123:robW123@cluster0.uwhek.mongodb.net/fileupload?retryWrites=true&w=majority";
+//  "mongodb+srv://bradt1234:bradt1234@cluster0.bgtnz.mongodb.net/fileupload?retryWrites=true&w=majority";
 // Create mongo connection
 const conn = mongoose.createConnection(mongoURI, {
   useNewUrlParser: true,
@@ -58,7 +59,24 @@ const upload = multer({ storage });
 // @desc Loads form
 
 app.get("/", (req, res) => {
-  res.render("index");
+  gfs.files.find().toArray((err, files) => {
+    // Check if files exist
+    if (!files || files.length === 0) {
+      res.render("index", { files: false });
+    } else {
+      files.map((file) => {
+        if (
+          file.contentType === "image/jpeg" ||
+          file.contentType === "image/png"
+        ) {
+          file.isImage = true;
+        } else {
+          file.isImage = false;
+        }
+      });
+      res.render("index", { files: files });
+    }
+  });
 });
 
 // @route POST /upload
@@ -124,6 +142,17 @@ app.get("/image/:filename", (req, res) => {
         err: "Not an image",
       });
     }
+  });
+});
+
+//@route DELETE /files/:id
+//@desc Delete file
+app.post("/files/:id", (req, res) => {
+  gfs.remove({ _id: req.params.id, root: "uploads" }, (err, gridStore) => {
+    if (err) {
+      return res.status(404).json({ err: err });
+    }
+    res.redirect("/");
   });
 });
 
