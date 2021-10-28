@@ -13,14 +13,17 @@ const { resolve } = require("path");
 const app = express();
 // Middleware
 app.use(bodyParser.json());
-app.use(methodOverride("meth"));
+app.use(methodOverride("methodOverride"));
 app.set("view engine", "ejs");
 
 // Mongo URI
 const mongoURI =
   "mongodb+srv://robW123:robW123@cluster0.uwhek.mongodb.net/fileupload?retryWrites=true&w=majority";
 // Create mongo connection
-const conn = mongoose.createConnection(mongoURI);
+const conn = mongoose.createConnection(mongoURI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+});
 
 // Init gfs
 let gfs;
@@ -61,7 +64,7 @@ app.get("/", (req, res) => {
 // @route POST /upload
 // @desc Uploads file to DB
 
-app.post("/upload", upload.array("file"), (req, res) => {
+app.post("/upload", upload.single("file"), (req, res) => {
   // res.json({ file: req.file });
   res.redirect("/");
 });
@@ -77,9 +80,7 @@ app.get("/files", (req, res) => {
         err: "No files exist",
       });
     }
-
     // Files exist
-
     return res.json(files);
   });
 });
@@ -95,9 +96,34 @@ app.get("/files/:filename", (req, res) => {
         err: "No files exists",
       });
     }
-
     // File exists
     return res.json(file);
+  });
+});
+
+// @ route GET /image/:filename
+// @ desc Display single file object
+
+app.get("/image/:filename", (req, res) => {
+  gfs.files.findOne({ filename: req.params.filename }, (err, file) => {
+    // Check if file
+    if (!file || file.length === 0) {
+      return res.status(404).json({
+        err: "No files exists",
+      });
+    }
+    // File exists
+    // Check if image
+    if (file.contentType === "image/jpeg" || file.contentType === "image/png") {
+      // Read output to browser
+      var readstream = gfs.createReadStream(file.filename);
+      // const readStream = gfs.openDownloadStream(file.filename);
+      readstream.pipe(res);
+    } else {
+      res.status(404).json({
+        err: "Not an image",
+      });
+    }
   });
 });
 
